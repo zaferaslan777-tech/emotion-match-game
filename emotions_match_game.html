@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Emotions Match Game</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0c29;
+    --bg2: #1a1740;
+    --accent: #ff6fb7;
+    --accent2: #ffe066;
+    --accent3: #6fe8ff;
+    --card-bg: #23204a;
+    --card-border: #3a3570;
+    --matched: #2a4a3a;
+    --matched-border: #4cff9b;
+    --selected: #3a2a5a;
+    --selected-border: #c87eff;
+    --text: #f0eaff;
+    --shadow: 0 4px 32px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: 'Nunito', sans-serif;
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 12px 40px;
+    background-image:
+      radial-gradient(ellipse at 20% 10%, #3b1fa855 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, #c8187555 0%, transparent 50%);
+  }
+
+  h1 {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.6rem;
+    letter-spacing: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 4px;
+    text-align: center;
+  }
+
+  .subtitle {
+    font-size: 0.95rem;
+    color: #a89fcc;
+    margin-bottom: 28px;
+    letter-spacing: 1px;
+    text-align: center;
+  }
+
+  .scoreboard {
+    display: flex;
+    gap: 24px;
+    margin-bottom: 24px;
+    background: var(--bg2);
+    border-radius: 18px;
+    padding: 12px 28px;
+    border: 1px solid var(--card-border);
+    box-shadow: var(--shadow);
+  }
+
+  .score-item {
+    text-align: center;
+  }
+
+  .score-label {
+    font-size: 0.7rem;
+    color: #a89fcc;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+
+  .score-value {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.8rem;
+    color: var(--accent2);
+  }
+
+  .game-area {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    width: 100%;
+    max-width: 700px;
+    margin-bottom: 28px;
+  }
+
+  .column-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    text-align: center;
+  }
+
+  .words-col .column-title { color: var(--accent3); }
+  .emojis-col .column-title { color: var(--accent); }
+
+  .column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .card {
+    background: var(--card-bg);
+    border: 2px solid var(--card-border);
+    border-radius: 16px;
+    padding: 14px 10px;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.15s, border-color 0.2s, background 0.2s, box-shadow 0.2s;
+    user-select: none;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card:hover:not(.matched):not(.wrong-flash) {
+    transform: translateY(-3px) scale(1.03);
+    border-color: #7c60cc;
+    box-shadow: 0 8px 24px rgba(100,60,200,0.3);
+  }
+
+  .card.selected {
+    background: var(--selected);
+    border-color: var(--selected-border);
+    box-shadow: 0 0 0 3px #c87eff44, 0 8px 24px rgba(200,126,255,0.25);
+    transform: scale(1.04);
+  }
+
+  .card.matched {
+    background: var(--matched);
+    border-color: var(--matched-border);
+    cursor: default;
+    box-shadow: 0 0 0 2px #4cff9b44;
+    animation: matchPop 0.4s ease;
+  }
+
+  @keyframes matchPop {
+    0% { transform: scale(1.05); }
+    50% { transform: scale(1.12); }
+    100% { transform: scale(1); }
+  }
+
+  .card.wrong-flash {
+    animation: wrongFlash 0.5s ease;
+  }
+
+  @keyframes wrongFlash {
+    0%, 100% { border-color: var(--card-border); background: var(--card-bg); }
+    30% { border-color: #ff4466; background: #3a1020; }
+    60% { border-color: #ff4466; background: #3a1020; }
+  }
+
+  .word-card {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.2rem;
+    letter-spacing: 1px;
+  }
+
+  .emoji-card {
+    font-size: 2.4rem;
+    line-height: 1.1;
+  }
+
+  .emoji-card .emoji-label {
+    font-size: 0.65rem;
+    color: #8a80aa;
+    display: block;
+    margin-top: 2px;
+    letter-spacing: 1px;
+    font-family: 'Nunito', sans-serif;
+  }
+
+  .btn {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    padding: 14px 40px;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--accent), #c84fff);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(255,111,183,0.4);
+    transition: transform 0.15s, box-shadow 0.15s;
+    text-transform: uppercase;
+  }
+
+  .btn:hover {
+    transform: translateY(-2px) scale(1.04);
+    box-shadow: 0 8px 28px rgba(255,111,183,0.5);
+  }
+
+  .btn:active {
+    transform: scale(0.97);
+  }
+
+  .win-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(10,8,30,0.88);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 18px;
+    animation: fadeIn 0.4s ease;
+  }
+
+  .win-overlay.show {
+    display: flex;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  .win-box {
+    background: var(--bg2);
+    border: 2px solid var(--matched-border);
+    border-radius: 28px;
+    padding: 48px 56px;
+    text-align: center;
+    box-shadow: 0 0 60px rgba(76,255,155,0.2), var(--shadow);
+  }
+
+  .win-emoji { font-size: 4rem; margin-bottom: 12px; }
+
+  .win-title {
+    font-family: 'Fredoka One', cursive;
+    font-size: 2.4rem;
+    background: linear-gradient(90deg, var(--accent2), var(--matched-border));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 8px;
+  }
+
+  .win-sub {
+    color: #a89fcc;
+    font-size: 1rem;
+    margin-bottom: 24px;
+  }
+
+  .matched-count {
+    font-family: 'Fredoka One', cursive;
+    font-size: 1.1rem;
+    color: var(--matched-border);
+    margin-bottom: 6px;
+  }
+
+  /* Stars */
+  .stars { font-size: 2rem; margin-bottom: 18px; }
+
+  @media (max-width: 480px) {
+    h1 { font-size: 1.9rem; }
+    .game-area { gap: 12px; }
+    .word-card { font-size: 1rem; }
+    .emoji-card { font-size: 2rem; }
+    .card { padding: 11px 6px; }
+    .win-box { padding: 32px 24px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>🎭 Emotion Match</h1>
+<p class="subtitle">Match the feeling with the emoji!</p>
+
+<div class="scoreboard">
+  <div class="score-item">
+    <div class="score-label">Matched</div>
+    <div class="score-value" id="matchCount">0</div>
+  </div>
+  <div class="score-item">
+    <div class="score-label">Tries</div>
+    <div class="score-value" id="tries">0</div>
+  </div>
+  <div class="score-item">
+    <div class="score-label">Best</div>
+    <div class="score-value" id="best">—</div>
+  </div>
+</div>
+
+<div class="game-area">
+  <div>
+    <div class="column-title words-col">Words</div>
+    <div class="column" id="wordsCol"></div>
+  </div>
+  <div>
+    <div class="column-title emojis-col">Emojis</div>
+    <div class="column" id="emojisCol"></div>
+  </div>
+</div>
+
+<button class="btn" onclick="newGame()">🔀 New Game</button>
+
+<div class="win-overlay" id="winOverlay">
+  <div class="win-box">
+    <div class="win-emoji">🎉</div>
+    <div class="win-title">Brilliant!</div>
+    <div class="stars" id="winStars"></div>
+    <div class="win-sub">You matched all emotions!</div>
+    <div class="matched-count" id="winTries"></div>
+    <br>
+    <button class="btn" onclick="newGame()">🔀 Play Again</button>
+  </div>
+</div>
+
+<script>
+const emotions = [
+  { word: 'bored',      emoji: '😒', label: 'bored',      phonetic: 'bɔːrd' },
+  { word: 'depressed',  emoji: '😞', label: 'depressed',  phonetic: 'dɪˈprɛst' },
+  { word: 'excited',    emoji: '🤩', label: 'excited',    phonetic: 'ɪkˈsaɪtɪd' },
+  { word: 'relaxed',    emoji: '😌', label: 'relaxed',    phonetic: 'rɪˈlækst' },
+  { word: 'interested', emoji: '🧐', label: 'interested', phonetic: 'ˈɪntrɪstɪd' },
+  { word: 'miserable',  emoji: '😢', label: 'miserable',  phonetic: 'ˈmɪzərəbl' },
+  { word: 'furious',    emoji: '🤬', label: 'furious',    phonetic: 'ˈfjʊəriəs' },
+];
+
+let selectedWord = null;
+let selectedEmoji = null;
+let matchedPairs = 0;
+let tries = 0;
+let best = null;
+let locked = false;
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function newGame() {
+  selectedWord = null;
+  selectedEmoji = null;
+  matchedPairs = 0;
+  tries = 0;
+  locked = false;
+  document.getElementById('matchCount').textContent = '0';
+  document.getElementById('tries').textContent = '0';
+  document.getElementById('winOverlay').classList.remove('show');
+
+  const shuffledWords = shuffle(emotions);
+  const shuffledEmojis = shuffle(emotions);
+
+  const wordsCol = document.getElementById('wordsCol');
+  const emojisCol = document.getElementById('emojisCol');
+  wordsCol.innerHTML = '';
+  emojisCol.innerHTML = '';
+
+  shuffledWords.forEach(e => {
+    const card = document.createElement('div');
+    card.className = 'card word-card';
+    card.textContent = e.word.toUpperCase();
+    card.dataset.id = e.word;
+    card.dataset.type = 'word';
+    card.addEventListener('click', () => handleClick(card, 'word'));
+    wordsCol.appendChild(card);
+  });
+
+  shuffledEmojis.forEach(e => {
+    const card = document.createElement('div');
+    card.className = 'card emoji-card';
+    card.innerHTML = `${e.emoji}`;
+    card.dataset.id = e.word;
+    card.dataset.type = 'emoji';
+    card.addEventListener('click', () => handleClick(card, 'emoji'));
+    emojisCol.appendChild(card);
+  });
+}
+
+function handleClick(card, type) {
+  if (locked) return;
+  if (card.classList.contains('matched')) return;
+
+  if (type === 'word') {
+    if (selectedWord === card) {
+      card.classList.remove('selected');
+      selectedWord = null;
+      return;
+    }
+    if (selectedWord) selectedWord.classList.remove('selected');
+    selectedWord = card;
+    card.classList.add('selected');
+  } else {
+    if (selectedEmoji === card) {
+      card.classList.remove('selected');
+      selectedEmoji = null;
+      return;
+    }
+    if (selectedEmoji) selectedEmoji.classList.remove('selected');
+    selectedEmoji = card;
+    card.classList.add('selected');
+  }
+
+  if (selectedWord && selectedEmoji) {
+    tries++;
+    document.getElementById('tries').textContent = tries;
+
+    if (selectedWord.dataset.id === selectedEmoji.dataset.id) {
+      // Match!
+      const emotion = emotions.find(e => e.word === selectedWord.dataset.id);
+      selectedWord.classList.remove('selected');
+      selectedEmoji.classList.remove('selected');
+      selectedWord.classList.add('matched');
+      selectedEmoji.classList.add('matched');
+      selectedWord = null;
+      selectedEmoji = null;
+      matchedPairs++;
+      document.getElementById('matchCount').textContent = matchedPairs;
+
+      // Speak the word
+      speakWord(emotion.word);
+
+      if (matchedPairs === emotions.length) {
+        setTimeout(() => showWin(), 600);
+      }
+    } else {
+      // Wrong
+      locked = true;
+      const sw = selectedWord;
+      const se = selectedEmoji;
+      sw.classList.add('wrong-flash');
+      se.classList.add('wrong-flash');
+      setTimeout(() => {
+        sw.classList.remove('selected', 'wrong-flash');
+        se.classList.remove('selected', 'wrong-flash');
+        selectedWord = null;
+        selectedEmoji = null;
+        locked = false;
+      }, 520);
+    }
+  }
+}
+
+function speakWord(word) {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(word);
+    utter.lang = 'en-US';
+    utter.rate = 0.85;
+    utter.pitch = 1.05;
+
+    // Try to pick an English voice
+    const voices = window.speechSynthesis.getVoices();
+    const engVoice = voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes('google'))
+                  || voices.find(v => v.lang.startsWith('en-US'))
+                  || voices.find(v => v.lang.startsWith('en'));
+    if (engVoice) utter.voice = engVoice;
+
+    window.speechSynthesis.speak(utter);
+  }
+}
+
+function showWin() {
+  if (best === null || tries < best) {
+    best = tries;
+    document.getElementById('best').textContent = best;
+  }
+  const stars = tries <= 7 ? '⭐⭐⭐' : tries <= 10 ? '⭐⭐' : '⭐';
+  document.getElementById('winStars').textContent = stars;
+  document.getElementById('winTries').textContent = `You finished in ${tries} ${tries === 1 ? 'try' : 'tries'}!`;
+  document.getElementById('winOverlay').classList.add('show');
+}
+
+// Load voices
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.onvoiceschanged = () => {};
+}
+
+newGame();
+</script>
+</body>
+</html>
